@@ -30,7 +30,7 @@ def signal_definition(support, resistance, current_price, sentiment):
     print('sentiment:', sentiment)
 
     # Устанавливаем погрешность для покупки и продажи в 3%
-    tolerance = 0.03
+    tolerance = 0.01
 
     # Вычисляем верхнюю границу для покупки и нижнюю границу для продажи
     buy_price_threshold = support * (1 + tolerance)
@@ -40,12 +40,14 @@ def signal_definition(support, resistance, current_price, sentiment):
     print('sell_price_threshold:', sell_price_threshold)
 
     if support <= current_price <= buy_price_threshold and sentiment == "bullish":
+    # if sentiment == "bullish":
+
         # Если цена близка к поддержке в пределах допустимого диапазона и настроение бычье, открываем лонг
         side = "Buy"
         take_profit_price, stop_loss_price = tp_and_sl(price=current_price, side=side)
         return side, take_profit_price, stop_loss_price
-
     elif sell_price_threshold <= current_price <= resistance and sentiment == "bearish":
+    # elif sentiment == "bearish":
         # Если цена близка к сопротивлению в пределах допустимого диапазона и настроение медвежье, открываем шорт
         side = "Sell"
         take_profit_price, stop_loss_price = tp_and_sl(price=current_price, side=side)
@@ -177,6 +179,7 @@ def get_current_price(session, symbol):
             last_price = response['result']['list'][0]['lastPrice']
             print("Последняя цена актива", symbol, ":", last_price)
             return float(last_price)
+        #Рассмотреть возможность брать при покупке по самой низкой или высокой цене на основе bye или sell и списка ордеров
         else:
             print("Ошибка при получении цены:", response.get("retMsg"))
             return None
@@ -187,11 +190,11 @@ def get_current_price(session, symbol):
 # тейк-профит и стоп-лосс
 def tp_and_sl(price,side):
     if side == "Sell":
-        take_profit_price = price * 0.99  # TP на -1% от цены покупки
-        stop_loss_price = price * 1.004   # SL на +0.4% от цены покупки
+        take_profit_price = price * 0.25  # TP на -1% от цены покупки
+        stop_loss_price = price * 1.009   # SL на +0.4% от цены покупки
     else:  # side == "Buy"
-        take_profit_price = price * 1.01  # TP на +1% от цены покупки
-        stop_loss_price = price * 0.996    # SL на -0.4% от цены покупки
+        take_profit_price = price * 1.025  # TP на +1% от цены покупки
+        stop_loss_price = price * 0.98    # SL на -0.4% от цены покупки
     
     print("take_profit_price: ", take_profit_price)
     print("stop_loss_price: ", stop_loss_price)

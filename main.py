@@ -2,6 +2,11 @@ from dotenv import load_dotenv
 from pybit.unified_trading import HTTP
 import os
 import order_handler
+import strategy
+import save_order
+import time
+import strategy_test
+import order_handler_test
 
 # Загружаем переменные окружения из key.env
 load_dotenv('key.env')
@@ -10,6 +15,13 @@ load_dotenv('key.env')
 api_key = os.getenv('API_KEY')
 api_secret = os.getenv('SECRET_KEY')
 
+# Указываем торговую пару, сумму, тип операции
+symbols = [ "ETHUSDT", "LTCUSDT", "XRPUSDT", "ADAUSDT"]
+symbol="ETHUSDT"
+amount=10000
+side="Buy" # side Buy, Sell
+interval = 1 # разрез по выборке свечей 1, 2, 3, 5 и тд
+minutes = 60 #время
 
 # Подключение к счету Bybit
 session = HTTP(
@@ -37,21 +49,64 @@ def get_balance():
         print("Ошибка при получении баланса:", e)     
 
 # Покупка 
-def place_order():
-    order_handler.place_order(session=session,symbol="ETHUSDT", amount=500, side="Sell") # side Buy, Sell
+def execute_trade(symbol):
     
-# Продажа
+    support, resistance, sentiment = strategy.fetch_strategy(session=session, 
+                                                             symbol=symbol,
+                                                             interval=interval,
+                                                             minutes=minutes)
+    
+    order_handler.execute_trade(session=session,
+                                symbol=symbol, 
+                                support=support,
+                                resistance=resistance,
+                                amount=amount,
+                                sentiment=sentiment)
 
-#test
-def test():
-    market_info = session.get_symbol_info(symbol="ETHUSDT")
-    print(market_info)  
+def strategy_try_test():
+    print("Пара: " + symbol)
+    strategy_test.fetch_strategy(session=session,
+                                                             symbol=symbol,
+                                                             interval=interval,
+                                                             minutes=minutes)
+# def main_loop():
+#     # Начинаем цикл обработки торгов
+#     while True:
+#             execute_trade()
+#     else:
+#             # Если сигнала нет, пропускаем итерацию
+#         print("Нет подходящего сигнала для сделки. Ждем следующую проверку...")
+        
+#         # Задержка перед следующим циклом, например, на 60 секунд
+#     time.sleep(60)
 
-# Пример использования
+def execute_trade_for_all_symbols():
+    for symbol in symbols:
+        print(f"Обработка символа: {symbol}")
+        execute_trade(symbol=symbol)
+
+def chek():
+    response = session.get_order_history(category="linear", limit=10)
+    print(response)
+
+# order book analyse
+def order_book():
+    for symbol in symbols:
+        print('===============================================')
+        print(symbol)
+        support, resistance, sentiment_none = strategy.fetch_strategy(session=session,
+                                                                 symbol=symbol,
+                                                                 interval=interval,
+                                                                 minutes=minutes)
+        sentiment = strategy_test.analyze_order_book(session=session, symbol=symbol)
+        order_handler_test.execute_trade(session=session,
+                                symbol=symbol,
+                                support=support,
+                                resistance=resistance,
+                                amount=amount,
+                                sentiment=sentiment)
+
 if __name__ == "__main__":
-    place_order()
-    # test()
-    # get_balance()
-
-    
-
+    order_book()
+  # execute_trade_for_all_symbols()
+#    chek()
