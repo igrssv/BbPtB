@@ -2,7 +2,7 @@ import sys
 import save_order
 
 def execute_trade(session, symbol, support, resistance, amount, sentiment):
-    amount_and_qty = get_amount(session=session,amount=amount,symbol=symbol)
+    amount_and_qty = get_amount(session=session,amount=amount,symbol=symbol,sentiment=sentiment)
     qty=round_qty(amount_and_qty[0],symbol=symbol)
     current_price=amount_and_qty[1]
 
@@ -38,15 +38,16 @@ def signal_definition(support, resistance, current_price, sentiment):
 
     print('buy_price_threshold:', buy_price_threshold)
     print('sell_price_threshold:', sell_price_threshold)
-
-    if support <= current_price <= buy_price_threshold and sentiment == "bullish":
+    # if support <= current_price <= buy_price_threshold and sentiment == "bullish":
+    if support <= current_price  and sentiment == "bullish":
     # if sentiment == "bullish":
 
         # Если цена близка к поддержке в пределах допустимого диапазона и настроение бычье, открываем лонг
         side = "Buy"
         take_profit_price, stop_loss_price = tp_and_sl(price=current_price, side=side)
         return side, take_profit_price, stop_loss_price
-    elif sell_price_threshold <= current_price <= resistance and sentiment == "bearish":
+    # elif sell_price_threshold <= current_price <= resistance and sentiment == "bearish":
+    elif sell_price_threshold <= current_price  and sentiment == "bearish":
     # elif sentiment == "bearish":
         # Если цена близка к сопротивлению в пределах допустимого диапазона и настроение медвежье, открываем шорт
         side = "Sell"
@@ -119,8 +120,8 @@ def response_order(order):
 
 
 # Рассчет qty и цена покупки
-def get_amount(session, amount, symbol):
-    price = get_current_price(session=session, symbol=symbol)
+def get_amount(session, amount, symbol,sentiment):
+    price = get_current_price(session=session, symbol=symbol, sentiment=sentiment)
     qty = amount / price
     print("qty:",qty)
     return qty, price
@@ -168,7 +169,7 @@ def round_qty(qty, symbol):
 
 
 #Текущая цена актива
-def get_current_price(session, symbol):
+def get_current_price(session, symbol,sentiment):
     try:
         response = session.get_tickers(
             category="spot",  # Выбор категории (например, "inverse", "spot")
@@ -178,8 +179,13 @@ def get_current_price(session, symbol):
         if response.get("retCode") == 0:
             last_price = response['result']['list'][0]['lastPrice']
             print("Последняя цена актива", symbol, ":", last_price)
-            return float(last_price)
-        #Рассмотреть возможность брать при покупке по самой низкой или высокой цене на основе bye или sell и списка ордеров
+            # Дополнитель Рассмотреть возможность брать при покупке по самой низкой или высокой цене на основе bye или sell и списка ордеров
+            #Устаовка цены в зависимости от настроения рынка, ниже или выше
+            if sentiment == "bullish":
+                return float(last_price) * 0.99
+            else:
+                return float(last_price) * 1.01
+
         else:
             print("Ошибка при получении цены:", response.get("retMsg"))
             return None

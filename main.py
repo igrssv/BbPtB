@@ -16,7 +16,7 @@ api_key = os.getenv('API_KEY')
 api_secret = os.getenv('SECRET_KEY')
 
 # Указываем торговую пару, сумму, тип операции
-symbols = [ "ETHUSDT", "LTCUSDT", "XRPUSDT", "ADAUSDT"]
+symbols = [ "BTCUSDT","ETHUSDT", "LTCUSDT", "XRPUSDT", "ADAUSDT"]
 symbol="ETHUSDT"
 amount=10000
 side="Buy" # side Buy, Sell
